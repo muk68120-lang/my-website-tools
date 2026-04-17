@@ -91,15 +91,7 @@ button:active{
 <button class="equal" onclick="calculate()">=</button>
 <button onclick="append('^')">^</button>
 
-<button onclick="append('sin(')">sin</button>
-<button onclick="append('cos(')">cos</button>
-<button onclick="append('tan(')">tan</button>
-<button onclick="append('√(')">√</button>
-
-<button onclick="append('log(')">log</button>
-<button onclick="append('π')">π</button>
-<button onclick="append('e')">e</button>
-<button class="mic" onclick="startVoice()">🎤</button>
+<!-- ❌ removed scientific buttons --><button class="mic" onclick="startVoice()">🎤</button>
 
 </div>
 </div><script>
@@ -109,28 +101,14 @@ function append(v){ display.value+=v; }
 function clearDisplay(){ display.value=""; }
 function backspace(){ display.value=display.value.slice(0,-1); }
 
-function toRad(x){ return x*Math.PI/180; }
-
-/* CALCULATION */
+/* ✅ SIMPLE CALCULATE */
 function calculate(){
   let input=display.value;
 
   try{
-    let exp=input
-      .replace(/π|pi/g,"Math.PI")
-      .replace(/\be\b/g,"Math.E")
-      .replace(/√/g,"Math.sqrt(")
-      .replace(/log\(/g,"Math.log10(")
-      .replace(/sin\(/g,"Math.sin(toRad(")
-      .replace(/cos\(/g,"Math.cos(toRad(")
-      .replace(/tan\(/g,"Math.tan(toRad(")
-      .replace(/\^/g,"**");
+    let exp=input.replace(/\^/g,"**");
 
-    let open=(exp.match(/\(/g)||[]).length;
-    let close=(exp.match(//g)||[]).length;
-    if(open>close){ exp+=')'.repeat(open-close); }
-
-    let result=Function("toRad","return " + exp)(toRad);
+    let result=eval(exp);
 
     if(!isFinite(result)) throw "err";
 
@@ -144,24 +122,7 @@ function calculate(){
   }
 }
 
-/* WORD TO NUMBER */
-function wordsToNumber(text){
-  const map={
-    "zero":0,"ek":1,"do":2,"teen":3,"char":4,"paanch":5,
-    "chhe":6,"saat":7,"aath":8,"nau":9,
-    "das":10,"gyarah":11,"barah":12,"terah":13,"chaudah":14,"pandrah":15,
-    "solah":16,"satrah":17,"atharah":18,"unnis":19,
-    "bees":20,"pachis":25,"tees":30,"chalis":40,"pachaas":50,
-    "saath":60,"sattar":70,"assi":80,"nabbe":90,
-    "sau":100,"hazaar":1000,"lakh":100000
-  };
-
-  return text.split(" ").map(w=>{
-    return map[w]!==undefined ? map[w] : w;
-  }).join(" ");
-}
-
-/* VOICE */
+/* 🎤 VOICE (simple only) */
 function startVoice(){
   let rec=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
   rec.lang="hi-IN";
@@ -169,24 +130,23 @@ function startVoice(){
   rec.onresult=e=>{
     let t=e.results[0][0].transcript.toLowerCase();
 
-    t=wordsToNumber(t);
+    const numMap={
+      "zero":"0","ek":"1","do":"2","teen":"3","char":"4",
+      "paanch":"5","chhe":"6","saat":"7","aath":"8","nau":"9",
+      "das":"10","gyarah":"11","barah":"12","bees":"20",
+      "tees":"30","chalis":"40","pachaas":"50","sau":"100"
+    };
+
+    Object.keys(numMap).forEach(w=>{
+      t=t.replace(new RegExp(w,"g"),numMap[w]);
+    });
 
     t=t
-      .replace(/plus|jor/g,"+")
-      .replace(/minus|ghata/g,"-")
-      .replace(/multiply|guna|x/g,"*")
-      .replace(/divide|bhaag/g,"/")
-      .replace(/power/g,"^")
-      .replace(/sin/g,"sin(")
-      .replace(/cos/g,"cos(")
-      .replace(/tan/g,"tan(")
-      .replace(/log/g,"log(")
-      .replace(/root/g,"√(")
-      .replace(/pi/g,"π");
-
-    let open=(t.match(//g)||[]).length;
-    let close=(t.match(//g)||[]).length;
-    if(open>close){ t+=')'.repeat(open-close); }
+      .replace(/plus|add|jor/g,"+")
+      .replace(/minus|ghatav/g,"-")
+      .replace(/multiply|guna/g,"*")
+      .replace(/divide|bhaag|bhag/g,"/")
+      .replace(/power/g,"^");
 
     t=t.replace(/\s+/g,"");
 
@@ -198,46 +158,10 @@ function startVoice(){
   rec.start();
 }
 
-/* NUMBER TO HINDI */
-function numberToHindi(n){
-  if(isNaN(n)) return n;
-
-  const ones=["","एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ"];
-  const teens=["दस","ग्यारह","बारह","तेरह","चौदह","पंद्रह","सोलह","सत्रह","अठारह","उन्नीस"];
-  const tens=["","","बीस","तीस","चालीस","पचास","साठ","सत्तर","अस्सी","नब्बे"];
-
-  function convert(num){
-    if(num<10) return ones[num];
-    if(num<20) return teens[num-10];
-    if(num<100) return tens[Math.floor(num/10)]+" "+ones[num%10];
-    if(num<1000) return ones[Math.floor(num/100)]+" सौ "+convert(num%100);
-    if(num<100000) return convert(Math.floor(num/1000))+" हजार "+convert(num%1000);
-    if(num<10000000) return convert(Math.floor(num/100000))+" लाख "+convert(num%100000);
-    return num.toString();
-  }
-
-  return convert(n);
-}
-
-/* SPEAK */
-function speakHindi(num){
+/* 🔊 HINDI SPEAK */
+function speakHindi(txt){
   speechSynthesis.cancel();
-
-  let text="";
-  if(!isFinite(num)){
-    text="गणना में त्रुटि";
-  }
-  else if(Number.isInteger(num)){
-    text="उत्तर है "+numberToHindi(num);
-  }
-  else{
-    let parts=num.toString().split(".");
-    let intPart=numberToHindi(parseInt(parts[0]));
-    let decimalPart=parts[1].split("").map(d=>numberToHindi(parseInt(d))).join(" ");
-    text="उत्तर है "+intPart+" दशमलव "+decimalPart;
-  }
-
-  let u=new SpeechSynthesisUtterance(text);
+  let u=new SpeechSynthesisUtterance("उत्तर है " + txt);
   u.lang="hi-IN";
   speechSynthesis.speak(u);
 }
