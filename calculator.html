@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Voice Calculator</title>
-
-<style>
+<title>AI Voice Calculator</title><style>
 *{margin:0;padding:0;box-sizing:border-box}
 
 body{
@@ -68,17 +65,8 @@ button:active{
 .equal{background:#00c853;}
 .clear{background:#ff3b30;}
 .mic{background:#007aff;}
-</style>
-</head>
-
-<body>
-
-<div class="calculator">
-<input id="display" readonly>
-
-<div class="buttons">
-
-<button class="clear" onclick="clearDisplay()">C</button>
+</style></head><body><div class="calculator">
+<input id="display" readonly><div class="buttons"><button class="clear" onclick="clearDisplay()">C</button>
 <button onclick="backspace()">⌫</button>
 <button onclick="append('(')">(</button>
 <button onclick="append(')')">)</button>
@@ -114,9 +102,7 @@ button:active{
 <button class="mic" onclick="startVoice()">🎤</button>
 
 </div>
-</div>
-
-<script>
+</div><script>
 let display=document.getElementById("display");
 
 function append(v){ display.value+=v; }
@@ -125,7 +111,7 @@ function backspace(){ display.value=display.value.slice(0,-1); }
 
 function toRad(x){ return x*Math.PI/180; }
 
-/* ✅ SAFE CALCULATION ENGINE */
+/* ✅ FIXED CALCULATE */
 function calculate(){
   let input=display.value;
 
@@ -146,7 +132,7 @@ function calculate(){
 
     display.value=result;
 
-    speak("Answer is " + result); // 🔊 auto speak
+    speak("Answer is " + result);
 
   }catch{
     display.value="Error";
@@ -154,7 +140,7 @@ function calculate(){
   }
 }
 
-/* 🔥 ADVANCED VOICE (Hindi + English PRO) */
+/* 🎤 VOICE FIX */
 function startVoice(){
   let rec=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
   rec.lang="hi-IN";
@@ -162,7 +148,6 @@ function startVoice(){
   rec.onresult=e=>{
     let t=e.results[0][0].transcript.toLowerCase();
 
-    // 🔢 Numbers (Hindi + English mix)
     const numMap={
       "zero":"0","ek":"1","do":"2","teen":"3","char":"4",
       "paanch":"5","chhe":"6","saat":"7","aath":"8","nau":"9",
@@ -177,7 +162,6 @@ function startVoice(){
       t=t.replace(new RegExp(w,"g"),numMap[w]);
     });
 
-    // ➕ Operators FIX (important for multiply error)
     t=t
       .replace(/plus|add|jor/g,"+")
       .replace(/minus|ghata|ghatav/g,"-")
@@ -185,16 +169,10 @@ function startVoice(){
       .replace(/divide|bhaag|bhag|dividedby/g,"/")
       .replace(/power|ki power/g,"^");
 
-    // 🧠 advanced words
     t=t
       .replace(/square root/g,"√")
-      .replace(/root/g,"√")
-      .replace(/sin/g,"sin")
-      .replace(/cos/g,"cos")
-      .replace(/tan/g,"tan")
-      .replace(/log/g,"log");
+      .replace(/root/g,"√");
 
-    // ❌ remove spaces
     t=t.replace(/\s+/g,"");
 
     display.value=t;
@@ -207,11 +185,11 @@ function startVoice(){
 
 /* 🔊 VOICE OUTPUT */
 function speak(txt){
-  speechSynthesis.cancel(); // stop previous
+  speechSynthesis.cancel();
   let u=new SpeechSynthesisUtterance(txt);
   u.lang="hi-IN";
   u.rate=1;
   speechSynthesis.speak(u);
 }
-</script>
+</script></body>
 </html>
