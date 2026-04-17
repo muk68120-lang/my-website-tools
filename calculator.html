@@ -97,7 +97,7 @@ button:active{
 <button onclick="append('√(')">√</button>
 
 <button onclick="append('log(')">log</button>
-<button onclick="append('pi')">π</button>
+<button onclick="append('π')">π</button>
 <button onclick="append('e')">e</button>
 <button class="mic" onclick="startVoice()">🎤</button>
 
@@ -111,7 +111,7 @@ function backspace(){ display.value=display.value.slice(0,-1); }
 
 function toRad(x){ return x*Math.PI/180; }
 
-/* ✅ FIXED CALCULATE */
+/* ✅ CALCULATION ENGINE (STRONG) */
 function calculate(){
   let input=display.value;
 
@@ -132,15 +132,34 @@ function calculate(){
 
     display.value=result;
 
-    speak("Answer is " + result);
+    speakHindi(result);
 
   }catch{
     display.value="Error";
-    speak("Calculation error");
+    speak("गणना में त्रुटि");
   }
 }
 
-/* 🎤 VOICE FIX */
+/* 🔥 HINDI WORD → NUMBER */
+function wordsToNumber(text){
+  const map={
+    "zero":0,"ek":1,"do":2,"teen":3,"char":4,"paanch":5,
+    "chhe":6,"saat":7,"aath":8,"nau":9,
+    "das":10,"gyarah":11,"barah":12,"terah":13,"chaudah":14,"pandrah":15,
+    "solah":16,"satrah":17,"atharah":18,"unnis":19,
+    "bees":20,"ikkees":21,"bais":22,"teis":23,"chaubees":24,"pachis":25,
+    "chhabis":26,"sattais":27,"athais":28,"untis":29,
+    "tees":30,"chalis":40,"pachaas":50,"saath":60,"sattar":70,
+    "assi":80,"nabbe":90,
+    "sau":100,"hazaar":1000,"lakh":100000
+  };
+
+  return text.split(" ").map(w=>{
+    return map[w]!==undefined ? map[w] : w;
+  }).join(" ");
+}
+
+/* 🎤 VOICE INPUT */
 function startVoice(){
   let rec=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
   rec.lang="hi-IN";
@@ -148,30 +167,15 @@ function startVoice(){
   rec.onresult=e=>{
     let t=e.results[0][0].transcript.toLowerCase();
 
-    const numMap={
-      "zero":"0","ek":"1","do":"2","teen":"3","char":"4",
-      "paanch":"5","chhe":"6","saat":"7","aath":"8","nau":"9",
-      "das":"10","gyarah":"11","barah":"12","terah":"13",
-      "chaudah":"14","pandrah":"15","solah":"16","satrah":"17",
-      "atharah":"18","unnis":"19","bees":"20","tees":"30",
-      "chalis":"40","pachaas":"50","saath":"60","sattar":"70",
-      "assi":"80","nabbe":"90","sau":"100","hazaar":"1000"
-    };
-
-    Object.keys(numMap).forEach(w=>{
-      t=t.replace(new RegExp(w,"g"),numMap[w]);
-    });
+    t=wordsToNumber(t);
 
     t=t
       .replace(/plus|add|jor/g,"+")
-      .replace(/minus|ghata|ghatav/g,"-")
-      .replace(/multiply|multipliedby|guna|into|x/g,"*")
-      .replace(/divide|bhaag|bhag|dividedby/g,"/")
-      .replace(/power|ki power/g,"^");
-
-    t=t
-      .replace(/square root/g,"√")
-      .replace(/root/g,"√");
+      .replace(/minus|ghata/g,"-")
+      .replace(/multiply|guna|into|x/g,"*")
+      .replace(/divide|bhaag|bhag/g,"/")
+      .replace(/power/g,"^")
+      .replace(/square root|root/g,"√");
 
     t=t.replace(/\s+/g,"");
 
@@ -183,12 +187,69 @@ function startVoice(){
   rec.start();
 }
 
-/* 🔊 VOICE OUTPUT */
-function speak(txt){
+/* 🔢 NUMBER → HINDI (ADVANCED) */
+function numberToHindi(n){
+  if(isNaN(n)) return n;
+
+  const ones=["","एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ"];
+  const teens=["दस","ग्यारह","बारह","तेरह","चौदह","पंद्रह","सोलह","सत्रह","अठारह","उन्नीस"];
+  const tens=["","","बीस","तीस","चालीस","पचास","साठ","सत्तर","अस्सी","नब्बे"];
+
+  function convert(num){
+    if(num<10) return ones[num];
+    if(num<20) return teens[num-10];
+    if(num<100){
+      return tens[Math.floor(num/10)]+" "+ones[num%10];
+    }
+    if(num<1000){
+      return ones[Math.floor(num/100)]+" सौ "+convert(num%100);
+    }
+    if(num<100000){
+      return convert(Math.floor(num/1000))+" हजार "+convert(num%1000);
+    }
+    if(num<10000000){
+      return convert(Math.floor(num/100000))+" लाख "+convert(num%100000);
+    }
+    return num.toString();
+  }
+
+  return convert(n);
+}
+
+/* 🔊 FINAL HINDI SPEAK (DECIMAL + LARGE SUPPORT) */
+function speakHindi(num){
   speechSynthesis.cancel();
-  let u=new SpeechSynthesisUtterance(txt);
+
+  let text="";
+
+  if(!isFinite(num)){
+    text="गणना में त्रुटि";
+  }
+  else if(Number.isInteger(num)){
+    text="उत्तर है "+numberToHindi(num);
+  }
+  else{
+    let parts=num.toString().split(".");
+    let intPart=numberToHindi(parseInt(parts[0]));
+
+    let decimalPart=parts[1]
+      .split("")
+      .map(d=>numberToHindi(parseInt(d)))
+      .join(" ");
+
+    text="उत्तर है "+intPart+" दशमलव "+decimalPart;
+  }
+
+  let u=new SpeechSynthesisUtterance(text);
   u.lang="hi-IN";
   u.rate=1;
+
+  speechSynthesis.speak(u);
+}
+
+function speak(txt){
+  let u=new SpeechSynthesisUtterance(txt);
+  u.lang="hi-IN";
   speechSynthesis.speak(u);
 }
 </script></body>
