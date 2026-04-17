@@ -3,143 +3,195 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Advanced Calculator</title>
+<title>AI Voice Calculator</title>
 
 <style>
-body {
-  margin: 0;
-  background: linear-gradient(135deg,#0f172a,#1e293b);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-family: Arial;
-  color: white;
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#141e30,#243b55);
+  font-family:sans-serif;
 }
 
-.container {
-  width: 320px;
+.calculator{
+  width:100%;
+  max-width:360px;
+  padding:20px;
+  border-radius:25px;
+  backdrop-filter:blur(20px);
+  background:rgba(255,255,255,0.05);
+  box-shadow:0 0 30px rgba(0,0,0,0.6);
 }
 
-.display {
-  background: #020617;
-  padding: 20px;
-  border-radius: 15px;
-  text-align: right;
-  font-size: 28px;
-  margin-bottom: 10px;
-  word-wrap: break-word;
+#display{
+  width:100%;
+  height:70px;
+  border:none;
+  outline:none;
+  font-size:30px;
+  text-align:right;
+  padding:15px;
+  border-radius:15px;
+  background:rgba(255,255,255,0.15);
+  color:#fff;
+  margin-bottom:15px;
+  font-weight:bold;
+  font-family:"Courier New", monospace;
+  letter-spacing:2px;
 }
 
-.history {
-  height: 60px;
-  overflow-y: auto;
-  font-size: 12px;
-  opacity: 0.7;
-  margin-bottom: 10px;
+.buttons{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
 }
 
-.buttons {
-  display: grid;
-  grid-template-columns: repeat(5,1fr);
-  gap: 8px;
+button{
+  padding:16px;
+  font-size:18px;
+  border:none;
+  border-radius:15px;
+  background:rgba(255,255,255,0.1);
+  color:white;
+  font-weight:bold;
 }
 
-button {
-  padding: 15px;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  background: #334155;
-  color: white;
+button:active{
+  transform:scale(0.9);
 }
 
-button:hover {
-  background: #475569;
-}
-
-.equal {
-  background: #22c55e;
-}
-
-.operator {
-  background: #2563eb;
-}
-
-.clear {
-  background: #ef4444;
-}
+.operator{background:#ff9500;}
+.equal{background:#00c853;}
+.clear{background:#ff3b30;}
+.mic{background:#007aff;}
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
-<div class="history" id="history"></div>
-<div class="display" id="display">0</div>
+<div class="calculator">
+<input id="display" readonly>
 
 <div class="buttons">
-<button class="clear" onclick="clearAll()">C</button>
+
+<button class="clear" onclick="clearDisplay()">C</button>
 <button onclick="backspace()">⌫</button>
 <button onclick="append('(')">(</button>
 <button onclick="append(')')">)</button>
-<button class="operator" onclick="append('/')">÷</button>
 
 <button onclick="append('7')">7</button>
 <button onclick="append('8')">8</button>
 <button onclick="append('9')">9</button>
-<button class="operator" onclick="append('*')">×</button>
-<button onclick="append('Math.sqrt(')">√</button>
+<button class="operator" onclick="append('/')">÷</button>
 
 <button onclick="append('4')">4</button>
 <button onclick="append('5')">5</button>
 <button onclick="append('6')">6</button>
-<button class="operator" onclick="append('-')">−</button>
-<button onclick="append('**2')">x²</button>
+<button class="operator" onclick="append('*')">×</button>
 
 <button onclick="append('1')">1</button>
 <button onclick="append('2')">2</button>
 <button onclick="append('3')">3</button>
 <button class="operator" onclick="append('+')">+</button>
-<button onclick="append('Math.pow(')">xʸ</button>
 
 <button onclick="append('0')">0</button>
 <button onclick="append('.')">.</button>
-<button onclick="append('Math.sin(')">sin</button>
-<button onclick="append('Math.cos(')">cos</button>
-<button onclick="append('Math.tan(')">tan</button>
+<button class="equal" onclick="calculate()">=</button>
+<button onclick="append('^')">^</button>
 
-<button class="equal" onclick="calculate()" style="grid-column: span 5">=</button>
+<button onclick="append('sin(')">sin</button>
+<button onclick="append('cos(')">cos</button>
+<button onclick="append('tan(')">tan</button>
+<button onclick="append('√(')">√</button>
+
+<button onclick="append('log(')">log</button>
+<button onclick="append('pi')">π</button>
+<button onclick="append('e')">e</button>
+<button class="mic" onclick="startVoice()">🎤</button>
+
 </div>
-
 </div>
 
 <script>
-let display = document.getElementById("display");
-let history = document.getElementById("history");
+let display=document.getElementById("display");
 
-function append(val){
-  if(display.innerText === "0") display.innerText = "";
-  display.innerText += val;
-}
+function append(v){ display.value+=v; }
+function clearDisplay(){ display.value=""; }
+function backspace(){ display.value=display.value.slice(0,-1); }
 
-function clearAll(){
-  display.innerText = "0";
-}
-
-function backspace(){
-  display.innerText = display.innerText.slice(0,-1) || "0";
-}
+function toRad(x){ return x*Math.PI/180; }
 
 function calculate(){
+  let input=display.value;
+
   try{
-    let result = eval(display.innerText);
-    history.innerHTML += display.innerText + " = " + result + "<br>";
-    display.innerText = result;
+    let exp=input
+      .replace(/pi/g,"Math.PI")
+      .replace(/\be\b/g,"Math.E")
+      .replace(/sin\(([^)]+)\)/g,(_,x)=>Math.sin(toRad(eval(x))))
+      .replace(/cos\(([^)]+)\)/g,(_,x)=>Math.cos(toRad(eval(x))))
+      .replace(/tan\(([^)]+)\)/g,(_,x)=>Math.tan(toRad(eval(x))))
+      .replace(/√\(([^)]+)\)/g,(_,x)=>Math.sqrt(eval(x)))
+      .replace(/log\(([^)]+)\)/g,(_,x)=>Math.log10(eval(x)))
+      .replace(/\^/g,"**");
+
+    let result=eval(exp);
+
+    if(!isFinite(result)) throw "err";
+
+    display.value=result;
+
   }catch{
-    display.innerText = "Error";
+    display.value="Error";
   }
+}
+
+/* 🔥 VOICE (Hindi + English FULL FIX) */
+function startVoice(){
+  let rec=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
+  rec.lang="hi-IN";
+
+  rec.onresult=e=>{
+    let t=e.results[0][0].transcript.toLowerCase();
+
+    const numMap={
+      "zero":"0","ek":"1","do":"2","teen":"3","char":"4",
+      "paanch":"5","chhe":"6","saat":"7","aath":"8","nau":"9",
+      "das":"10","gyarah":"11","barah":"12","bees":"20",
+      "tees":"30","chalis":"40","pachaas":"50","sau":"100"
+    };
+
+    Object.keys(numMap).forEach(w=>{
+      t=t.replace(new RegExp(w,"g"),numMap[w]);
+    });
+
+    t=t
+      .replace(/plus|add|jod/g,"+")
+      .replace(/minus|ghata/g,"-")
+      .replace(/multiply|guna/g,"*")
+      .replace(/divide|bhaag|bhag/g,"/")
+      .replace(/power/g,"^");
+
+    t=t.replace(/\s+/g,"");
+
+    display.value=t;
+    calculate();
+
+    setTimeout(()=>speak(display.value),300);
+  };
+
+  rec.start();
+}
+
+/* 🔊 voice output */
+function speak(txt){
+  let u=new SpeechSynthesisUtterance(txt);
+  u.lang="hi-IN";
+  speechSynthesis.speak(u);
 }
 </script>
 
